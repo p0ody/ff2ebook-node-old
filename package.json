@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "set NODE_ENV=production node ./bin/www"
+    "start": "POST=12026 NODE_ENV=production node ./bin/www"
   },
   "dependencies": {
     "body-parser": "~1.15.1",
