@@ -1,8 +1,53 @@
-body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+@dark-grey: #1c1c1d;
+@med-grey: #373738;
+@light-grey: #4f4f50;
+@orange: #ff9300;
+
+body
+{
+    background-color: @med-grey;
+
 }
 
-a {
-  color: #00B7FF;
+.menu
+{
+    background-color: @dark-grey;
+    text-align: center;
+}
+
+.menu .glyphicon
+{
+    color: @orange;
+    top: 4px;
+}
+
+.menu a,
+.menu a:focus
+{
+    background-color: transparent;
+    color: white;
+    border: none;
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+.menu a:hover,
+.menu a:active:focus
+{
+    background-color: @light-grey;
+    color: white;
+    box-shadow: none;
+}
+
+.logo
+{
+    color: white;
+    font-size: 25px;
+    top: 7px;
+    left: 5px;
+}
+
+.orange
+{
+    color: @orange;
 }

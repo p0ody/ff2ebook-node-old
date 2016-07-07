@@ -14,6 +14,12 @@ var io = require("socket.io")(http);
 //var server = http.createServer(app);
 require("./src/Debug")(app);
 
+//Live reload
+var livereload = require('livereload');
+var reloadServer = livereload.createServer();
+reloadServer.config.exts.push("ejs");
+reloadServer.watch(__dirname +"/public");
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
@@ -60,7 +66,5 @@ app.use(function (err, req, res, next) {
         error: {}
     });
 });
-
-Debug("test");
 
 module.exports = app;
