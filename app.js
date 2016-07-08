@@ -4,14 +4,24 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var Utils = require("./src/Utils");
 
+//Routes
 var routes = require('./routes/index');
 var archive = require('./routes/archive');
 
+// Server init
 var app = express();
-var http = require('http');
-var io = require("socket.io")(http);
-//var server = http.createServer(app);
+var server = require('http').Server(app);
+
+var port = Utils.normalizePort(process.env.PORT || '3000');
+server.listen(port);
+
+// Socket.IO
+var io = require("socket.io")(server);
+require("./src/socketHandler")(io);
+
+// Debug utilities
 require("./src/Debug")(app);
 
 //Live reload
