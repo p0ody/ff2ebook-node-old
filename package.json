@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "PORT=12026 NODE_ENV=production node app.js"
+    "start": "PORT=12026 NODE_ENV=developement node app.js"
   },
   "dependencies": {
     "body-parser": "~1.15.1",
