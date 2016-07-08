@@ -6,7 +6,14 @@
 body
 {
     background-color: @med-grey;
+    color: white;
+}
 
+.container-fluid
+{
+    text-align: center;
+    width: 100%;
+    font-family: "Trebuchet MS", Helvetica, sans-serif;
 }
 
 .menu
@@ -37,6 +44,9 @@ body
     background-color: @light-grey;
     color: white;
     box-shadow: none;
+    -webkit-transition-duration: 0.3s;
+    -moz-transition-duration: 0.3s;
+    transition-duration: 0.3s;
 }
 
 .logo
@@ -50,4 +60,38 @@ body
 .orange
 {
     color: @orange;
+}
+
+.btn.active.focus, .btn.active:focus, .btn.focus, .btn:active.focus, .btn:active:focus, .btn:focus
+{
+    outline: 0;
+}
+
+.input-area
+{
+    top: 60px;
+}
+
+.input-options
+{
+    text-align: left;
+    vertical-align: middle;
+}
+
+.input-options select,
+.input-options input
+{
+    max-width: 200px;
+}
+
+.input-options .checkbox
+ {
+     line-height: 25px;
+ }
+
+.input-options input[type="checkbox"]
+{
+    height: 18px;
+    width: 18px;
+    margin-top: 4px;
 }
