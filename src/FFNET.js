@@ -134,9 +134,6 @@ function FFNET(url, socket)
         }
 
         self.chapters[chapNum] = chapter;
-        
-        if (self.chapters.length - 1 == self.chapterCount)
-            finish();
     }
 
     self.events.on("pageSource", function(chapNum)
@@ -296,11 +293,6 @@ function FFNET(url, socket)
 
         return matches[1];
 
-    }
-
-    function finish()
-    {
-        self.events.removeAllListeners("pageSource");
     }
 }
 
