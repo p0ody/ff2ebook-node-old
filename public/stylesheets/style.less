@@ -2,6 +2,7 @@
 @med-grey: #373738;
 @light-grey: #4f4f50;
 @orange: #ff9300;
+@orange50: rgba(255, 147, 0, 0.50);
 
 body
 {
@@ -94,4 +95,12 @@ body
     height: 18px;
     width: 18px;
     margin-top: 4px;
+}
+
+input:focus,
+select:focus
+{
+    border-color: @orange !important;
+    box-shadow: 0 1px 1px @orange50 inset, 0 0 8px @orange50 !important;
+    outline: 0 none !important;
 }

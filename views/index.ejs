@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <title>FF2eBook.com</title>
     <!--StylesSheets-->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
@@ -17,11 +17,12 @@
     <% include menu %>
 
     <div class="container-fluid">
+        <div id="status-text">Ready.</div>
         <div class="row"> <!-- Input URL -->
             <div class="col-md-offset-3 col-md-6 input-area">
                 <form id="input-form">
                     <div class="form-group input-group">
-                        <input type="url" class="form-control" id="input-text" placeholder="Fic URL">
+                        <input type="url" class="form-control" id="input-text" placeholder="Fic URL" value="https://www.fanfiction.net/s/6256154/1/The_Unforgiving_Minute">
                         <span class="input-group-btn">
                             <button type="submit" class="btn btn-default">Convert</button>
                         </span>
@@ -40,15 +41,15 @@
                         </div>
                         <div class="checkbox">
                             <label>
-                                <input type="checkbox" id="auto-dl" checked="checked"> Automatically download when ready.
+                                <input type="checkbox" id="auto-dl" <%= autoDL %>> Automatically download when ready.
                             </label>
                         </div>
                         <div class="checkbox">
                             <label>
-                                <input type="checkbox" id="send-email"> Send as Email
+                                <input type="checkbox" id="send-email" <%= sendEmail %>> Send as Email
                             </label>
                         </div>
-                        <input type="email" class="form-control hidden" id="input-text" placeholder="Email">
+                        <input type="email" class="form-control" id="email-address" placeholder="Email" value="<%= emailAddress %>">
                     </div>
                 </form>
             </div>

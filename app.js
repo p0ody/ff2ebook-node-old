@@ -6,10 +6,6 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var Utils = require("./src/Utils");
 
-//Routes
-var routes = require('./routes/index');
-var archive = require('./routes/archive');
-
 // Server init
 var app = express();
 var server = require('http').Server(app);
@@ -43,8 +39,9 @@ app.use(cookieParser());
 app.use(require('less-middleware')(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
 
+//Routes
+var routes = require('./routes/index');
 app.use('/', routes);
-app.use('/archive', archive);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

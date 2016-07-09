@@ -1,4 +1,5 @@
 require("./Debug");
+var Fic = require("./Fic");
 
 function socketHandler(io)
 {
@@ -8,8 +9,8 @@ function socketHandler(io)
 
         socket.on("convert-start", function(data)
         {
-            Debug(data.url);
-
+            var fic = new Fic(socket);
+            fic.start(data.url, data.forceUpdate);
         });
     });
 
