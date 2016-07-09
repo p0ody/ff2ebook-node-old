@@ -9,6 +9,7 @@ function socketHandler(io)
 
         socket.on("convert-start", function(data)
         {
+            socket.emit("status", "Starting...");
             var fic = new Fic(socket);
             fic.start(data.url, data.forceUpdate);
         });

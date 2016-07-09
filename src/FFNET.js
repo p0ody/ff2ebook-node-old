@@ -1,7 +1,6 @@
 var request = require("request");
 var events = require("events");
 var Chapter = require("./Chapter");
-var eventEmitter = new events.EventEmitter();
 var ErrorHandler = require("./ErrorHandler");
 require("./Debug");
 
@@ -25,6 +24,7 @@ function FFNET(url, socket)
     self.pageSource = []; // pageSource[0] is fic info page
     self.chapters = [];
     self.error = new ErrorHandler(socket);
+    self.events = new events.EventEmitter();
 
     self.getData = function(url)
     {
@@ -39,22 +39,19 @@ function FFNET(url, socket)
 
     function getPageSource(chapNum)
     {
-        if (self.pageSource[chapNum] === undefined || self.pageSource[chapNum] == false)
+        request(getURL(chapNum), function (err, res, body)
         {
-            request(getURL(chapNum), function (err, res, body)
+            if (!err && res.statusCode == 200)
             {
-                if (!err && res.statusCode == 200)
-                {
-                    self.pageSource[chapNum] = body;
-                }
-                else
-                    self.pageSource[chapNum] = false;
+                self.pageSource[chapNum] = body;
+            }
+            else
+            {
+                self.pageSource[chapNum] = false;
+            }
 
-                eventEmitter.emit("pageSource", chapNum);
-            });
-        }
-        else
-            return self.pageSource[chapNum];
+            self.events.emit("pageSource", chapNum);
+        });
     }
 
     function findID()
@@ -117,7 +114,7 @@ function FFNET(url, socket)
     {
         socket.emit("status", "Chapter "+ chapNum +"...");
 
-        var source = self.pageSource[chapNum];
+        var source = self.pageSource[chapNum]
         if (source === false)
         {
             self.error.newError("Couldn't get page source for chapter " + chapNum);
@@ -137,9 +134,12 @@ function FFNET(url, socket)
         }
 
         self.chapters[chapNum] = chapter;
+        
+        if (self.chapters.length - 1 == self.chapterCount)
+            finish();
     }
 
-    eventEmitter.on("pageSource", function(chapNum)
+    self.events.on("pageSource", function(chapNum)
     {
         if (chapNum === 0)
             findFicInfos();
@@ -296,6 +296,11 @@ function FFNET(url, socket)
 
         return matches[1];
 
+    }
+
+    function finish()
+    {
+        self.events.removeAllListeners("pageSource");
     }
 }
 
