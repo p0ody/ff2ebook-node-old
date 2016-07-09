@@ -3,7 +3,6 @@ var events = require("events");
 var Chapter = require("./Chapter");
 var eventEmitter = new events.EventEmitter();
 var ErrorHandler = require("./ErrorHandler");
-var htmlparser = require("htmlparser2");
 require("./Debug");
 
 function FFNET(url, socket)
