@@ -1,6 +1,7 @@
 require("./Debug");
 var FFNET = require("./FFNET");
 var Utils = require("./Utils");
+var events = require("events");
 var ErrorHandler = require("./ErrorHandler");
 
 const SOURCE_FFNET  = "ffnet";
@@ -11,17 +12,10 @@ function Fic(socket)
 {
     var self = this;
     self.url = false;
-    self.title = false;
-    self.author = false;
-    self.chapCount = false;
-    self.summary = false;
-    self.wordsCount = false;
-    self.pairing = false;
-    self.ficId = false;
     self.forceUpdate = false;
     self.source = false;
-    self.chapters = [];
     self.error = new ErrorHandler(socket);
+    self.events = new events.EventEmitter();
 
     self.start = function(url, forceUpdate)
     {
@@ -37,24 +31,22 @@ function Fic(socket)
             switch(self.source)
             {
                 case SOURCE_FFNET:
-                    handler = new FFNET(url, socket);
+                    handler = new FFNET(url, socket, self.events);
                     break;
 
                 /*case SOURCE_FPCOM:
                     handler = new*/
-
             }
-            populate(handler.getData());
+            handler.populate();
+            self.events.on("chaptersReady", function()
+            {
+                Debug("Chapters ready");
+            });
         }
         else
             self.error.newError("Couldn't find fic source (Website.");
 
     };
-
-    function populate(data)
-    {
-
-    }
 }
 
 function findSource(url)
@@ -70,5 +62,6 @@ function findSource(url)
 
     return false;
 }
+
 
 module.exports = Fic;

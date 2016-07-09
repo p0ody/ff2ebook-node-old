@@ -1,3 +1,4 @@
+require('dotenv').config();
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -73,5 +74,24 @@ app.use(function (err, req, res, next) {
         error: {}
     });
 });
+
+// MySQL
+var mysql = require("mysql");
+global.db = mysql.createConnection(
+{
+    host: process.env.SQL_HOST,
+    user: process.env.SQL_USER,
+    password: process.env.SQL_PASSWORD,
+    database: process.env.SQL_DB
+});
+
+global.db.connect(function(err)
+{
+    if (err)
+    {
+        Debug(err);
+    }
+});
+
 
 module.exports = app;

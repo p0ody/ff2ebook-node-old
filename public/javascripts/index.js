@@ -1,3 +1,5 @@
+var _chapReadyCount = 0;
+
 $(document).ready(function ()
 {
     showEmail($("#send-email").prop("checked"));
@@ -6,6 +8,7 @@ $(document).ready(function ()
     $("#input-form").submit(function (e)
     {
         e.preventDefault();
+        reset();
         if ($("#input-text").val().length <= 0)
             return;
 
@@ -47,6 +50,12 @@ $(document).ready(function ()
 
     socket.on("status", updateStatusText);
 
+    socket.on("chapReady", function(chapCount)
+    {
+        _chapReadyCount++;
+        updateStatusText(_chapReadyCount +"/"+ chapCount);
+    })
+
 });
 
 function showEmail(bool)
@@ -59,5 +68,10 @@ function showEmail(bool)
 
 function updateStatusText(msg)
 {
-    $("#status-text").html($("#status-text").html()+"<br />"+msg);
+    $("#status-text").html(msg);
+}
+
+function reset()
+{
+    _chapReadyCount = 0;
 }

@@ -1,10 +1,9 @@
 var request = require("request");
-var events = require("events");
 var Chapter = require("./Chapter");
 var ErrorHandler = require("./ErrorHandler");
 require("./Debug");
 
-function FFNET(url, socket)
+function FFNET(url, socket, events)
 {
     var self = this;
     self.url = url;
@@ -24,14 +23,10 @@ function FFNET(url, socket)
     self.pageSource = []; // pageSource[0] is fic info page
     self.chapters = [];
     self.error = new ErrorHandler(socket);
-    self.events = new events.EventEmitter();
+    self.events = events;
+    self.chaptersReady = 0;
 
-    self.getData = function(url)
-    {
-        populate();
-    };
-
-    function populate()
+    self.populate = function()
     {
         findID();
         getPageSource(0);
@@ -112,9 +107,9 @@ function FFNET(url, socket)
 
     function findChapterInfos(chapNum)
     {
-        socket.emit("status", "Chapter "+ chapNum +"...");
+        socket.emit("chapReady", self.chapterCount);
 
-        var source = self.pageSource[chapNum]
+        var source = self.pageSource[chapNum];
         if (source === false)
         {
             self.error.newError("Couldn't get page source for chapter " + chapNum);
@@ -124,7 +119,7 @@ function FFNET(url, socket)
         var chapter = new Chapter();
 
         chapter.chapId = chapNum;
-        chapter.title = findChapterTitle(source);
+        chapter.title = findChapterTitle(source, chapNum);
         chapter.text = findChapterText(source);
 
         if (chapter.text === false)
@@ -134,6 +129,10 @@ function FFNET(url, socket)
         }
 
         self.chapters[chapNum] = chapter;
+        self.chaptersReady++;
+
+        if (self.chaptersReady >= self.chapterCount)
+            self.events.emit("chaptersReady", self);
     }
 
     self.events.on("pageSource", function(chapNum)
@@ -276,7 +275,7 @@ function FFNET(url, socket)
         return "Completed";
     }
 
-    function findChapterTitle(source)
+    function findChapterTitle(source, chapNum)
     {
         var matches = source.match(/Chapter [0-9]+?: (.+?)<br><\/div><div role='main' aria-label='story content' style='font-size:1.1em;'>/i);
         if (matches === null)
