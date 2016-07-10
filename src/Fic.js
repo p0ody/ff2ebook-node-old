@@ -1,4 +1,4 @@
-require("./Debug");
+var Debug = require("./Debug");
 var FFNET = require("./FFNET");
 var events = require("events");
 var ErrorHandler = require("./ErrorHandler");
@@ -11,47 +11,54 @@ const SOURCE_HPFF   = "hpff";
 
 function Fic(socket)
 {
-    var self = this;
-    self.url = false;
-    self.forceUpdate = false;
-    self.source = false;
-    self.error = new ErrorHandler(socket);
-    self.events = new events.EventEmitter();
-    self.handler = false;
-    self.fm = new FileMgr();
-
-    self.start = function(url, forceUpdate)
-    {
-        self.url = url;
-        self.forceUpdate = forceUpdate;
-        var source = findSource(url);
-
-        if (source !== false)
-        {
-            self.source = source;
-
-            switch(self.source)
-            {
-                case SOURCE_FFNET:
-                    self.handler = new FFNET(url, socket, self.events);
-                    self.handler.source = source;
-                    break;
-
-                /*case SOURCE_FPCOM:
-                    handler = new*/
-            }
-            self.handler.populate();
-            self.events.on("chaptersReady", function()
-            {
-                Debug("Chapters ready");
-                self.fm.createEpub(self.handler, socket);
-            });
-        }
-        else
-            self.error.newError("Couldn't find fic source (Website.");
-
-    };
+    this.url = false;
+    this.forceUpdate = false;
+    this.source = false;
+    this.error = new ErrorHandler(socket);
+    this.events = new events.EventEmitter();
+    this.handler = false;
+    this.fm = new FileMgr(socket, this.events);
+    this.socket = socket;
 }
+
+Fic.prototype.start = function (url, forceUpdate)
+{
+    var self = this;
+    self.url = url;
+    self.forceUpdate = forceUpdate;
+    var source = findSource(url);
+
+    if (source !== false)
+    {
+        self.source = source;
+
+        switch(self.source)
+        {
+            case SOURCE_FFNET:
+                self.handler = new FFNET(url, self.socket, self.events);
+                self.handler.source = source;
+                break;
+
+            /*case SOURCE_FPCOM:
+             handler = new*/
+        }
+        self.handler.populate();
+        self.events.on("chaptersReady", function()
+        {
+            Debug.log("Chapters ready");
+            self.fm.createEpub(self.handler, self.socket);
+        });
+
+        self.events.on("epubReady", function(path)
+        {
+            self.fm.createMobi(path);
+
+        })
+    }
+    else
+        self.error.newError("Couldn't find fic source (Website.");
+
+};
 
 
 

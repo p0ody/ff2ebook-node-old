@@ -1,6 +1,5 @@
 require('dotenv').config();
 var express = require('express');
-var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
@@ -14,12 +13,16 @@ var server = require('http').Server(app);
 var port = Utils.normalizePort(process.env.PORT || '3000');
 server.listen(port);
 
+// Set globals
+global.fs = require("fs");
+global.path = require('path');
+
 // Socket.IO
 var io = require("socket.io")(server);
 require("./src/socketHandler")(io);
 
 // Debug utilities
-require("./src/Debug")(app);
+var Debug = require("./src/Debug");
 
 //Live reload
 var livereload = require('livereload');
@@ -28,7 +31,7 @@ reloadServer.config.exts.push("ejs");
 reloadServer.watch(__dirname +"/public");
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', global.path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 // uncomment after placing your favicon in /public
@@ -37,8 +40,8 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
-app.use(require('less-middleware')(path.join(__dirname, 'public')));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(require('less-middleware')(global.path.join(__dirname, 'public')));
+app.use(express.static(global.path.join(__dirname, 'public')));
 
 //Routes
 var routes = require('./routes/index');
@@ -55,7 +58,7 @@ app.use(function (req, res, next) {
 
 // development error handler
 // will print stacktrace
-if (app.get('env') === 'development') {
+if (process.env.NODE_ENV === 'development') {
     app.use(function (err, req, res, next) {
         res.status(err.status || 500);
         res.render('error', {
@@ -89,7 +92,7 @@ global.db.connect(function(err)
 {
     if (err)
     {
-        Debug(err);
+        Debug.trace(err);
     }
 });
 

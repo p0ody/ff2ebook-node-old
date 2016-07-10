@@ -1,18 +1,18 @@
-require("./Debug");
+var Debug = require("./Debug");
 
 function ErrorHandler(socket)
 {
     var self = this;
     self.newError = function(msg)
     {
-        socket.emit("error", msg);
-        Debug(msg);
+        socket.emit("critical", msg);
+        Debug.log(msg);
     };
 
     self.newWarning = function(msg)
     {
         socket.emit("warning", msg);
-        Debug(msg);
+        Debug.log(msg);
     };
 
 }

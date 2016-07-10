@@ -83,7 +83,7 @@ FFNET.prototype.getURL = function(chapNum)
         if (chapNum < 0)
             return false;
 
-        return "http://m.fanfiction.net/s/"+ this.ficId;
+        return "http://m.fanfiction.net/s/"+ this.ficId +"/"+ chapNum;
     }
 
 };
@@ -290,7 +290,7 @@ FFNET.prototype.findChapterTitle = function(source, chapNum)
 
 FFNET.prototype.findChapterText = function(source)
 {
-    var matches = source.match(/<div style='padding:5px 10px 5px 10px;' class='storycontent nocopy' id='storycontent' >(.+?)<\/div>/i);
+    var matches = source.match(/<div style='padding:5px 10px 5px 10px;' class='storycontent nocopy' id='storycontent' >([\s\S]+?)<\/div>/i);
     if (matches === null)
         return false;
 

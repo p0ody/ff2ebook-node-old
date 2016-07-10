@@ -1,27 +1,25 @@
-require("./Debug");
+Debug = require("./Debug");
 var ErrorHandler = require("./ErrorHandler");
-var fs = require("fs-extra");
 var async = require("async");
 var tidy = require("htmltidy2").tidy;
+var EpubGen = require("epub-generator");
+
 var tidyOpts = {
     doctype: 'xhtml',
     indent: true,
     "indent-spaces": 4,
     clean: true
 };
-var uuid = require("uuid");
-var JSZip = require("jszip");
 
-
-function Epub(fic, socket)
+function Epub(fic, socket, events)
 {
     this.epubPath = process.env.ARCHIVE_DIR +"/"+ fic.source +"_"+ fic.ficId +"_"+ fic.updatedDate +".epub";
     this.content = [];
     this.fic = fic;
     this.error = new ErrorHandler(socket);
-    this.uuid = uuid.v4();
     this.Utils = require("./Utils");
-    this.zip = new JSZip();
+    this.epub = false;
+    this.events = events;
 
     this.createEpub();
 }
@@ -32,18 +30,17 @@ Epub.prototype.createEpub = function()
     async.series([
         function(callback) // Check to see if dir exist
         {
-            fs.stat(process.env.ARCHIVE_DIR, function(err, stats)
+            global.fs.stat(process.env.ARCHIVE_DIR, function(err, stats)
             {
                 if (!stats)
                 {
-                    fs.mkdir(process.env.ARCHIVE_DIR, function (err)
+                    global.fs.mkdir(process.env.ARCHIVE_DIR, function (err)
                     {
                         if (err)
                         {
                             self.error.newError("Couldn't create archive dir.");
-                            Debug(err);
                         }
-                        Debug("Dir created");
+                        Debug.log("Dir created");
                     });
                 }
             });
@@ -51,55 +48,37 @@ Epub.prototype.createEpub = function()
         },
         function(callback) // Check if epub already exist, if so delete
         {
-            fs.stat(self.epubPath, function(err, stats)
+            global.fs.stat(self.epubPath, function(err, stats)
             {
                 if (stats !== undefined)
                 {
-                    fs.unlink(self.epubPath, function(err)
+                    global.fs.unlink(self.epubPath, function(err)
                     {
                         if (err)
                         {
-                            Debug(err);
                             self.error.newError("Couldn't delete existing epub.");
                         }
                         else
-                            Debug(self.epubPath +" Deleted.");
+                            Debug.log(self.epubPath +" Deleted.");
                     })
                 }
             });
             callback(null);
-        },
-        function(callback) // Copy blank epub to archive folder
-        {
-            fs.copy("./blanks/epub/blank.epub", self.epubPath, function(err)
-            {
-                if (err)
-                {
-                    self.error.newError("Couldn't copy blank epub.");
-                    Debug(err);
-                }
-                else
-                    Debug("File copied");
-            });
-
-            callback(null);
-        }
-    ], self.genTitlePage());
+        }], self.genTitlePage());
 };
 
 Epub.prototype.genTitlePage = function()
 {
     var self = this;
-    fs.readFile("./blanks/title.xhtml", 'utf8', function(err, data)
+    global.fs.readFile("./blanks/title.xhtml", 'utf8', function(err, data)
     {
         if (err)
         {
             self.error.newError("Couldn't read title.xhtml.");
-            Debug(err);
         }
         else
         {
-            var find = [ "%title%", "%author", "%fandom%", "%summary%", "%status%", "%ficType%", "%pairing%", "%published%", "%updated%", "%wordsCount%", "%chapCount%", "%convertDate%" ];
+            var find = [ "%title%", "%author%", "%fandom%", "%summary%", "%status%", "%ficType%", "%pairing%", "%published%", "%updated%", "%wordsCount%", "%chapCount%", "%convertDate%" ];
             var replace = [
                 self.fic.title,
                 self.fic.author,
@@ -120,11 +99,10 @@ Epub.prototype.genTitlePage = function()
                 if (err)
                 {
                     self.error.newError("Couldn't use htmltidy on title page.");
-                    Debug("Tidy: " + err);
                 }
                 else
                 {
-                    self.content.push(new EpubFile(html, "OEBPS/Content/title.xhtml"));
+                    self.content.push(new EpubFile(html, "Content/title.xhtml", "xhtml", "Title Page", 1));
                     self.genChaptersPages();
                 }
             });
@@ -135,125 +113,103 @@ Epub.prototype.genTitlePage = function()
 Epub.prototype.genChaptersPages = function()
 {
     var self = this;
-    fs.readFile("./blanks/chapter.xhtml", 'utf8', function(err, data)
+    global.fs.readFile("./blanks/chapter.xhtml", 'utf8', function(err, data)
     {
         if (err)
         {
             self.error.newError("Couldn't read chapter.xhtml.");
-            Debug(error);
         }
         else
         {
-            self.fic.chapters.forEach(function(value, key)
+            async.each(self.fic.chapters, function(chap, callback)
             {
-                var find = [ "%title%", "%chapNum%", "%body%" ];
-                var replace = [ value.title, value.chapId, value.text ];
-
-                tidy(data.replaceArray(find, replace), tidyOpts, function(err, html)
+                if (chap)
                 {
-                    if (err)
+                    var find = ["%title%", "%chapNum%", "%body%"];
+                    var replace = [chap.title, chap.chapId, chap.text];
+
+                    tidy(data.replaceArray(find, replace), tidyOpts, function (err, html)
                     {
-                        self.error.newError("Couldn't tidy chapter #"+ value.chapId);
-                        Debug("Tidy: " + err);
-                    }
-                    else
-                        self.content.push(new EpubFile(html, "OEBPS/Content/chapter"+ value.chapId +".xhtml"));
-                });
+                        if (err)
+                        {
+                            self.error.newError("Couldn't tidy chapter #" + chap.chapId);
+                            callback(err);
+                        }
+                        else
+                        {
+                            self.content.push(new EpubFile(html, "Content/chapter" + chap.chapId + ".xhtml", "xhtml", chap.title, parseInt(chap.chapId) + 1));
+                            callback(null);
+                        }
+                    });
+                }
+                else
+                    callback(null);
+
+            }, function() {
+                Debug.log("Tidy finished");
+                self.genStyle();
             });
-            self.genContentOPF();
         }
     });
 };
 
-Epub.prototype.genContentOPF = function()
+Epub.prototype.genStyle = function()
 {
     var self = this;
-    fs.readFile("./blanks/epub/content.opf", 'utf8', function(err, data)
+    global.fs.readFile("./blanks/style.css", 'utf8', function(err, data)
     {
         if (err)
         {
             self.error.newError("Couldn't read content.opf.");
-            Debug(error);
         }
         else
         {
-            var manifest = "";
-            var spine = "";
-            self.fic.chapters.forEach(function(value, key)
-            {
-                if (value.chapId > 0)
-                {
-                    manifest += "<item id=\"chap"+ value.chapId +"\" href=\"Content/chapter"+ value.chapId +".xhtml\" media-type=\"application/xhtml+xml\" />";
-                    spine += "<itemref idref=\"chap"+ value.chapId +"\" />";
-                }
-            });
-
-            var find = [ "%title%", "%author%", "%uuid%", "%chapManifest%", "%summary%", "%chapSpine%" ];
-            var replace = [ self.fic.title, self.fic.author, self.uuid, manifest, spine ];
-
-            self.content.push(new EpubFile(data.replaceArray(find, replace), "OEBPS/content.opf"));
-
-            self.genTOC();
-        }
-    });
-};
-
-Epub.prototype.genTOC = function()
-{
-    var self = this;
-    fs.readFile("./blanks/epub/toc.ncx", 'utf8', function(err, data)
-    {
-        if (err)
-        {
-            self.error.newError("Couldn't read toc.ncx.");
-            Debug(error);
-        }
-        else
-        {
-            var toc = "";
-            var chapters = self.fic.chapters.sort(self.Utils.dynamicSort("chapId"));
-
-            chapters.forEach(function(value, key)
-            {
-                toc += "<navPoint id=\"navPoint-"+ (parseInt(value.chapId) + 1) +"\" playOrder=\""+ (parseInt(value.chapId) + 1) +"\">";
-                toc += "<navLabel><text>"+ value.chapId +". "+ value.title + "</text></navLabel>";
-                toc += "<content src=\"Content/chapter"+ value.chapId +".xhtml\"/>";
-                toc += "</navPoint>";
-            });
-
-            var find = [ "%title%", "%uuid%", "%chapNav%" ];
-            var replace = [ self.fic.title, self.uuid, toc ];
-
-            self.content.push(new EpubFile(data.replaceArray(find, replace), "OEBPS/toc.ncx"));
-
+            self.content.push(new EpubFile(data, "Styles/style.css", "css"));
             self.createFile();
         }
     });
+
 };
 
-Epub.prototype.createFile = function()
+Epub.prototype.createFile = function(err)
 {
-    var self = this;
-    fs.readFile(self.epubPath, function(err, data)
+    if (err)
     {
-        if (err)
-        {
-            self.error.newError("Couldn't open epub.");
-            Debug(error);
-        }
-        else
-        {
-            self.loadAsync(data);
+        this.error.newError("Error while generating files.");
+    }
 
-            self.content.forEach(function(value)
-            {
-                zip.file(value.path, value.content);
-                Debug("YAY!");
-            });
+    var self = this;
+    Debug.log("Starting file creation...");
 
-        }
+    this.epub = new EpubGen({
+        title: self.fic.title,
+        author: self.fic.author
     });
 
+
+    var content = this.content.sort(function(a, b)
+    {
+        return a.order - b.order;
+    });
+
+
+    content.forEach(function(value)
+    {
+        self.epub.add(value.filePath, value.content, { title: value.title, toc: value.filetype == "xhtml" });
+    });
+
+    self.epub.end().pipe(global.fs.createWriteStream(self.epubPath));
+
+    self.epub.on('error', function(err)
+    {
+        console.trace(err);
+    });
+
+    self.epub.on("finish", function()
+    {
+        Debug.log("Epub ready.");
+        self.events.emit("epubReady", self.epubPath);
+    });
 };
 
 
@@ -265,10 +221,13 @@ function formatValue(header, value)
     return "<span class=\"bold\">"+ header +":</span> "+ value +"<br /><br />";
 }
 
-function EpubFile(content, path)
+function EpubFile(content, path, type, title, order)
 {
     this.content = content;
     this.filePath = path;
+    this.title = title;
+    this.order = (order === undefined) ? 0 : order;
+    this.filetype = type;
 }
 
 

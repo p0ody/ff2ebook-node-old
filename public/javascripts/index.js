@@ -39,9 +39,9 @@ $(document).ready(function ()
     });
 
 
-    socket.on("error", function(msg)
+    socket.on("critical", function(msg)
     {
-        alert("Error: "+ msg);
+        //alert("Error: "+ msg);
     });
     socket.on("warning", function(msg)
     {

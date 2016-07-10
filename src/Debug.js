@@ -1,10 +1,14 @@
-module.exports = function(app)
+module.exports =
 {
-    this.Debug = function(log)
+    log: function(log)
     {
-        if (app.get('env') === 'development')
-        {
+        if (process.env.NODE_ENV === 'development')
             console.log(log);
-        }
+    },
+
+    trace: function(trace)
+    {
+        if (process.env.NODE_ENV === 'development')
+            console.trace(trace);
     }
 };
