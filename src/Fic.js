@@ -51,9 +51,8 @@ Fic.prototype.start = function (url, forceUpdate)
 
         self.events.on("epubReady", function(path)
         {
-            self.fm.createMobi(path);
 
-        })
+        });
     }
     else
         self.error.newError("Couldn't find fic source (Website.");
