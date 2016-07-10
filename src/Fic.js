@@ -1,8 +1,9 @@
 require("./Debug");
 var FFNET = require("./FFNET");
-var Utils = require("./Utils");
 var events = require("events");
 var ErrorHandler = require("./ErrorHandler");
+var FileMgr = require("./FileMgr");
+
 
 const SOURCE_FFNET  = "ffnet";
 const SOURCE_FPCOM  = "fpcom";
@@ -16,6 +17,8 @@ function Fic(socket)
     self.source = false;
     self.error = new ErrorHandler(socket);
     self.events = new events.EventEmitter();
+    self.handler = false;
+    self.fm = new FileMgr();
 
     self.start = function(url, forceUpdate)
     {
@@ -26,21 +29,22 @@ function Fic(socket)
         if (source !== false)
         {
             self.source = source;
-            var handler;
 
             switch(self.source)
             {
                 case SOURCE_FFNET:
-                    handler = new FFNET(url, socket, self.events);
+                    self.handler = new FFNET(url, socket, self.events);
+                    self.handler.source = source;
                     break;
 
                 /*case SOURCE_FPCOM:
                     handler = new*/
             }
-            handler.populate();
+            self.handler.populate();
             self.events.on("chaptersReady", function()
             {
                 Debug("Chapters ready");
+                self.fm.createEpub(self.handler, socket);
             });
         }
         else
@@ -48,6 +52,8 @@ function Fic(socket)
 
     };
 }
+
+
 
 function findSource(url)
 {
