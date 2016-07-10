@@ -79,7 +79,7 @@ app.use(function (err, req, res, next) {
 });
 
 // MySQL
-var mysql = require("mysql");
+/*var mysql = require("mysql");
 global.db = mysql.createConnection(
 {
     host: process.env.SQL_HOST,
@@ -94,7 +94,7 @@ global.db.connect(function(err)
     {
         Debug.trace(err);
     }
-});
+});*/
 
 
 // Proto
