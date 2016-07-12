@@ -2,26 +2,24 @@ var Debug = require("./Debug");
 var Epub = require("./Epub");
 var ErrorHandler = require("./ErrorHandler");
 
-function FileMgr(socket, events)
+function FileMgr(callback)
 {
-    this.events = events;
-    this.socket = socket;
-    this.error = new ErrorHandler(socket);
+    this.callback = callback;
 }
 
-FileMgr.prototype.createEpub = function(fic)
+FileMgr.prototype.createEpub = function(fic, callback)
 {
-    var epub = new Epub(fic, this.socket, this.events);
+    var epub = new Epub(fic, callback);
 };
 
-FileMgr.prototype.createMobi = function(path)
+FileMgr.prototype.createMobi = function(path, callback)
 {
     var self = this;
     var exec = require('child_process').execFile;
     var epub = global.path.basename(path);
     var mobi = process.env.ARCHIVE_DIR +"/"+ global.path.basename(path, ".epub") + ".mobi";
 
-    var callback = function()
+    var next = function()
     {
         exec(__dirname + "/../bin/kindlegen", [epub], {cwd: "./archive"}, function(err, stdout)
         {
@@ -30,11 +28,12 @@ FileMgr.prototype.createMobi = function(path)
                 if (stats === undefined)
                 {
                     self.error.newError("Error while converting to mobi.");
+                    callback("Error while converting to mobi.");
                 }
                 else
                 {
-                    self.events.emit("mobiReady");
                     Debug.log("Mobi Ready.");
+                    callback(null, mobi);
                 }
             });
 
@@ -54,16 +53,34 @@ FileMgr.prototype.createMobi = function(path)
                 else
                 {
                     Debug.log(mobi + " Deleted.");
-                    callback();
+                    next();
                 }
             })
         }
         else
-            callback();
+            next();
     });
 
 };
 
+/**
+ * @param path String
+ * @param callback function()
+ * */
+FileMgr.prototype.fileExist = function(path, callback)
+{
+    global.fs.stat(path, function(err, stats)
+    {
+        if (err)
+            callback(false);
+        else
+        {
+            if (stats.isFile())
+                callback(true);
+        }
+
+    });
+};
 
 
 

@@ -11,15 +11,14 @@ var tidyOpts = {
     clean: true
 };
 
-function Epub(fic, socket, events)
+function Epub(fic, callback)
 {
     this.epubPath = process.env.ARCHIVE_DIR +"/"+ fic.source +"_"+ fic.ficId +"_"+ fic.updatedDate +".epub";
     this.content = [];
     this.fic = fic;
-    this.error = new ErrorHandler(socket);
     this.Utils = require("./Utils");
     this.epub = false;
-    this.events = events;
+    this.callback = callback;
 
     this.createEpub();
 }
@@ -37,9 +36,8 @@ Epub.prototype.createEpub = function()
                     global.fs.mkdir(process.env.ARCHIVE_DIR, function (err)
                     {
                         if (err)
-                        {
-                            self.error.newError("Couldn't create archive dir.");
-                        }
+                            self.callback("Couldn't create archive dir.");
+
                         Debug.log("Dir created");
                     });
                 }
@@ -55,9 +53,7 @@ Epub.prototype.createEpub = function()
                     global.fs.unlink(self.epubPath, function(err)
                     {
                         if (err)
-                        {
-                            self.error.newError("Couldn't delete existing epub.");
-                        }
+                            self.callback("Couldn't delete existing epub.");
                         else
                             Debug.log(self.epubPath +" Deleted.");
                     })
@@ -73,9 +69,7 @@ Epub.prototype.genTitlePage = function()
     global.fs.readFile("./blanks/title.xhtml", 'utf8', function(err, data)
     {
         if (err)
-        {
-            self.error.newError("Couldn't read title.xhtml.");
-        }
+            self.callback("Couldn't read title.xhtml.");
         else
         {
             var find = [ "%title%", "%author%", "%fandom%", "%summary%", "%status%", "%ficType%", "%pairing%", "%published%", "%updated%", "%wordsCount%", "%chapCount%", "%convertDate%" ];
@@ -87,19 +81,17 @@ Epub.prototype.genTitlePage = function()
                 formatValue("Status", self.fic.status),
                 formatValue("FicType", self.fic.ficType),
                 formatValue("Pairing/Main char.", self.fic.pairing),
-                formatValue("Published date", self.fic.publishedDate),
-                formatValue("Updated date", self.fic.updatedDate),
+                formatValue("Published date", getDateYYYYMMDD(new Date(self.fic.publishedDate*1000))),
+                formatValue("Updated date", getDateYYYYMMDD(new Date(self.fic.updatedDate*1000))),
                 formatValue("Words count", self.fic.wordsCount),
                 formatValue("Chapter count", self.fic.chapterCount),
-                new Date().toISOString().substring(0, 10)
+                getDateYYYYMMDD(new Date())
             ];
 
             tidy(data.replaceArray(find, replace), tidyOpts, function(err, html)
             {
                 if (err)
-                {
-                    self.error.newError("Couldn't use htmltidy on title page.");
-                }
+                    self.callback("Couldn't use htmltidy on title page.");
                 else
                 {
                     self.content.push(new EpubFile(html, "Content/title.xhtml", "xhtml", "Title Page", 1));
@@ -116,9 +108,7 @@ Epub.prototype.genChaptersPages = function()
     global.fs.readFile("./blanks/chapter.xhtml", 'utf8', function(err, data)
     {
         if (err)
-        {
-            self.error.newError("Couldn't read chapter.xhtml.");
-        }
+            self.callback("Couldn't read chapter.xhtml.");
         else
         {
             async.each(self.fic.chapters, function(chap, callback)
@@ -132,7 +122,7 @@ Epub.prototype.genChaptersPages = function()
                     {
                         if (err)
                         {
-                            self.error.newError("Couldn't tidy chapter #" + chap.chapId);
+                            self.callback("Couldn't tidy chapter #" + chap.chapId);
                             callback(err);
                         }
                         else
@@ -160,7 +150,7 @@ Epub.prototype.genStyle = function()
     {
         if (err)
         {
-            self.error.newError("Couldn't read content.opf.");
+            self.callback("Couldn't read content.opf.");
         }
         else
         {
@@ -175,7 +165,7 @@ Epub.prototype.createFile = function(err)
 {
     if (err)
     {
-        this.error.newError("Error while generating files.");
+        this.callback("Error while generating files.");
     }
 
     var self = this;
@@ -202,13 +192,13 @@ Epub.prototype.createFile = function(err)
 
     self.epub.on('error', function(err)
     {
-        console.trace(err);
+        Debug.trace(err);
     });
 
     self.epub.on("finish", function()
     {
         Debug.log("Epub ready.");
-        self.events.emit("epubReady", self.epubPath);
+        self.callback(null, self.epubPath);
     });
 };
 
@@ -230,5 +220,10 @@ function EpubFile(content, path, type, title, order)
     this.filetype = type;
 }
 
+/** @param {Date} date */
+function getDateYYYYMMDD(date)
+{
+    return date.toISOString().substring(0, 10);
+}
 
 module.exports = Epub;

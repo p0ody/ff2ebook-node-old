@@ -35,12 +35,21 @@ function FFNET(url, socket, events)
         else if (chapNum > 0)
             self.findChapterInfos(chapNum);
     });
+
 }
 
-FFNET.prototype.populate = function()
+FFNET.prototype.gatherFicInfos = function()
 {
+    this.socket.emit("status", "Fetching fic data...");
     this.findID();
     this.getPageSource(0);
+};
+
+FFNET.prototype.gatherChaptersInfos = function()
+{
+    this.socket.emit("status", "Fetching chapters data...");
+    for (var i = 1; i <= this.chapterCount; i++)
+        this.getPageSource(i);
 };
 
 FFNET.prototype.getPageSource = function(chapNum)
@@ -69,9 +78,15 @@ FFNET.prototype.findID = function()
     var matches = this.url.match(/fanfiction\.net\/s\/([0-9]+)/i);
 
     if (matches === null)
+    {
         this.error.newError("Couldn't find fic ID.");
+        return false;
+    }
     else
+    {
         this.ficId = matches[1];
+        return matches[1];
+    }
 };
 
 FFNET.prototype.getURL = function(chapNum)
@@ -90,7 +105,6 @@ FFNET.prototype.getURL = function(chapNum)
 
 FFNET.prototype.findFicInfos = function()
 {
-    this.socket.emit("status", "Fetching fic data...");
     var source = this.pageSource[0];
     if (source === false)
     {
@@ -112,9 +126,7 @@ FFNET.prototype.findFicInfos = function()
     this.pairing = this.findPairing(source);
     this.status = this.findStatus(source);
 
-    this.socket.emit("status", "Fetching chapters data...");
-    for (var i = 1; i <= this.chapterCount; i++)
-        this.getPageSource(i);
+    this.events.emit("ficInfoReady");
 };
 
 FFNET.prototype.findChapterInfos = function(chapNum)

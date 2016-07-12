@@ -54,7 +54,12 @@ $(document).ready(function ()
     {
         _chapReadyCount++;
         updateStatusText(_chapReadyCount +"/"+ chapCount);
-    })
+    });
+
+    socket.on("fileReady", function(data)
+    {
+        updateStatusText("<a href=\"/download/"+ data.source +"/"+ data.id +"/"+ data.fileType +"\">Download</a>");
+    });
 
 });
 

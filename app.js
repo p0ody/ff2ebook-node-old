@@ -16,6 +16,7 @@ server.listen(port);
 // Set globals
 global.fs = require("fs");
 global.path = require('path');
+global.appRoot = __dirname;
 
 // Socket.IO
 var io = require("socket.io")(server);
@@ -45,7 +46,9 @@ app.use(express.static(global.path.join(__dirname, 'public')));
 
 //Routes
 var routes = require('./routes/index');
+var download = require("./routes/download");
 app.use('/', routes);
+app.use('/download', download);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -79,7 +82,7 @@ app.use(function (err, req, res, next) {
 });
 
 // MySQL
-/*var mysql = require("mysql");
+var mysql = require("mysql");
 global.db = mysql.createConnection(
 {
     host: process.env.SQL_HOST,
@@ -94,7 +97,14 @@ global.db.connect(function(err)
     {
         Debug.trace(err);
     }
-});*/
+    else
+        Debug.log("Connected to database.");
+});
+
+global.db.on("error", function(err)
+{
+    Debug.trace(err);
+});
 
 
 // Proto

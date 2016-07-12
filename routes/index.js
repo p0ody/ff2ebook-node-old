@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-require("../src/Debug");
+Debug = require("../src/Debug");
 
 router.get('/', function (req, res, next)
 {

@@ -11,7 +11,7 @@ function socketHandler(io)
         {
             socket.emit("status", "Starting...");
             var fic = new Fic(socket);
-            fic.start(data.url, data.forceUpdate);
+            fic.start(data.url, data.forceUpdate, data.fileType);
         });
     });
 
