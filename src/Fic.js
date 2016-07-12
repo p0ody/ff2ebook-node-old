@@ -115,7 +115,10 @@ Fic.prototype.start = function (url, forceUpdate, fileType)
         global.db.query("SELECT * FROM `fic_archive` WHERE `id`=?;", [self.handler.ficId], function (err, result)
         {
             if (err)
+            {
+                Debug.log(err);
                 return self.error.newError("Error whilte accessing database, please try again later");
+            }
 
             if ((result.length > 0 && result[0].updated >= self.handler.updatedDate)) // If is in DB and is up to date, check if filetype requested is mobi, then send appropiate file.
             {
