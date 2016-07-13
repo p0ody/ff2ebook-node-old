@@ -53,12 +53,14 @@ $(document).ready(function ()
     socket.on("chapReady", function(chapCount)
     {
         _chapReadyCount++;
-        updateStatusText(_chapReadyCount +"/"+ chapCount);
+        updateStatusText("Chapter ready: "+ _chapReadyCount +"/"+ chapCount);
     });
 
     socket.on("fileReady", function(data)
     {
-        updateStatusText("<a href=\"/download/"+ data.source +"/"+ data.id +"/"+ data.fileType +"\">Download</a>");
+        updateStatusText("<a id=\"download-link\" href=\"/download/"+ data.source +"/"+ data.id +"/"+ data.fileType +"\">Download!</a>");
+        if ($("#auto-dl").prop("checked"))
+            $("#download-link")[0].click();
     });
 
 });
@@ -79,4 +81,5 @@ function updateStatusText(msg)
 function reset()
 {
     _chapReadyCount = 0;
+    updateStatusText("Ready.");
 }

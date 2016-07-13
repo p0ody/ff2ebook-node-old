@@ -71,7 +71,10 @@ Fic.prototype.start = function (url, forceUpdate, fileType)
                 function (err)
                 {
                     if (err)
-                        self.error.newError("Error whilte accessing database, please try again later");
+                    {
+                        Debug.log(err);
+                        return self.error.newError("Error while accessing database, please try again later");
+                    }
                     else
                     {
                         // Start mobi convertion if filetype is mobi

@@ -6,11 +6,23 @@ router.get('/', function (req, res, next)
 {
     var autoDownload = (req.cookies.autoDL == "true") ? "checked=\"\"" : "";
     var sendEmail = (req.cookies.sendEmail == "true") ? "checked=\"\"" : "";
+    var epub, mobi;
+    if (req.cookies.fileType == "EPUB")
+    {
+        epub = "selected=\"selected\"";
+        mobi = "";
+    }
+    else
+    {
+        epub = "";
+        mobi = "selected=\"selected\"";
+    }
 
     res.render('index', 
         {
             autoDL: autoDownload,
-            fileType: req.cookies.fileType,
+            typeEpub: epub,
+            typeMobi: mobi,
             sendEmail: sendEmail,
             emailAddress: req.cookies.email
         });

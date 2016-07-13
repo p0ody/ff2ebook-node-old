@@ -1,6 +1,6 @@
 @dark-grey: #1c1c1d;
 @med-grey: #373738;
-@light-grey: #4f4f50;
+@light-grey: #616161;
 @orange: #ff9300;
 @orange50: rgba(255, 147, 0, 0.50);
 
@@ -70,7 +70,7 @@ body
 
 .input-area
 {
-    top: 60px;
+
 }
 
 .input-options
@@ -103,4 +103,25 @@ select:focus
     border-color: @orange !important;
     box-shadow: 0 1px 1px @orange50 inset, 0 0 8px @orange50 !important;
     outline: 0 none !important;
+}
+
+#status-text
+{
+    font-size: 25px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    color: @light-grey;
+}
+
+#status-text a,
+#status-text a:visited
+{
+    color: white;
+    text-decoration: none;
+}
+
+#status-text a:hover
+{
+    color: @orange;
+
 }
