@@ -24,17 +24,17 @@ function Fic(socket)
     this.fileType = false;
 }
 
-Fic.prototype.start = function (url, forceUpdate, fileType)
+Fic.prototype.start = function (infos)
 {
     var self = this;
-    self.url = url;
-    self.forceUpdate = forceUpdate;
-    self.fileType = fileType;
+    self.url = infos.url;
+    self.forceUpdate = infos.forceUpdate;
+    self.fileType = infos.fileType;
 
     if (self.fileType != TYPE_EPUB && self.fileType != TYPE_MOBI)
         return self.error.newError("Invalid filetype.");
 
-    var source = findSource(url);
+    var source = findSource(self.url);
 
     if (source === false)
         return self.error.newError("Couldn't find fic source (Website.");
