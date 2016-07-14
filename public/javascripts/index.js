@@ -67,15 +67,36 @@ $(document).ready(function ()
             $("#download-link")[0].click();
     });
 
+    socket.on("emailStart", function()
+    {
+        updateEmailSent("Sending email...", "yellow");
+    });
+
+    socket.on("emailSent", function(err)
+    {
+        if (err)
+            return updateEmailSent("<span class=\"glyphicon glyphicon-ban-circle\" aria-hidden=\"true\"></span> "+ err, "red");
+
+        updateEmailSent("<span class=\"glyphicon glyphicon-ok-circle\" aria-hidden=\"true\"></span> Email sent!", "#00FF40");
+    });
+
 });
 
 function showEmail(bool)
 {
     if (bool)
+    {
         $("#email-address").show();
+        $("#email-sent").show();
+    }
     else
+    {
         $("#email-address").hide();
+        $("#email-sent").hide();
+    }
+
 }
+
 
 function updateStatusText(msg)
 {
@@ -87,6 +108,7 @@ function reset()
     _chapReadyCount = 0;
     updateStatusText("Ready.");
     enableInputs(true);
+    updateEmailSent("");
 }
 
 function enableInputs(bool)
@@ -111,4 +133,12 @@ function enableInputs(bool)
         $("#send-email").attr("disabled", "disabled");
         $("#email-address").attr("readonly", "readonly");
     }
+}
+
+function updateEmailSent(msg, color)
+{
+    if (color === undefined)
+        color = "white";
+
+    $("#email-sent").html("<span style=\"color: "+ color +"\">"+ msg +"</span>");
 }

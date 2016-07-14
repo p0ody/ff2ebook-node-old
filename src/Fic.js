@@ -191,9 +191,10 @@ Fic.prototype.sendFileReady = function()
         fileType: this.fileType
     });
 
-    if (self.sendEmail != true)
+    if (self.sendEmail != true && self.emailAddress !== false)
         return;
 
+    self.socket.emit("emailStart");
     var mailOpts =
     {
         from: '"FF2EBOOK" <ebook-sender@ff2ebook.com>',
@@ -232,9 +233,13 @@ Fic.prototype.sendFileReady = function()
             trans.sendMail(mailOpts, function (err, info)
             {
                 if (err)
+                {
+                    self.socket.emit("emailSent", "An error has occured.");
                     return Debug.log(err);
+                }
                 else
                 {
+                    self.socket.emit("emailSent");
                     Debug.log("Email sent.");
                 }
 
