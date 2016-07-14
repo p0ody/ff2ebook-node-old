@@ -3,13 +3,14 @@ var FFNET = require("./FFNET");
 var events = require("events");
 var ErrorHandler = require("./ErrorHandler");
 var FileMgr = require("./FileMgr");
+var Mailer = require("nodemailer");
 
 
 const SOURCE_FFNET = "ffnet";
 const SOURCE_FPCOM = "fpcom";
 const SOURCE_HPFF = "hpff";
-const TYPE_EPUB = "EPUB";
-const TYPE_MOBI = "MOBI";
+const TYPE_EPUB = "epub";
+const TYPE_MOBI = "mobi";
 
 function Fic(socket)
 {
@@ -22,6 +23,9 @@ function Fic(socket)
     this.fm = new FileMgr(socket, this.events);
     this.socket = socket;
     this.fileType = false;
+    this.sendEmail = false;
+    this.emailAddress = false;
+    this.filePath = false;
 }
 
 Fic.prototype.start = function (infos)
@@ -29,7 +33,9 @@ Fic.prototype.start = function (infos)
     var self = this;
     self.url = infos.url;
     self.forceUpdate = infos.forceUpdate;
-    self.fileType = infos.fileType;
+    self.fileType = infos.fileType.toLowerCase();
+    self.sendEmail = infos.sendEmail;
+    self.emailAddress = infos.emailAddress;
 
     if (self.fileType != TYPE_EPUB && self.fileType != TYPE_MOBI)
         return self.error.newError("Invalid filetype.");
@@ -44,7 +50,7 @@ Fic.prototype.start = function (infos)
     switch (self.source)
     {
         case SOURCE_FFNET:
-            self.handler = new FFNET(url, self.socket, self.events);
+            self.handler = new FFNET(self.url, self.socket, self.events);
             self.handler.source = source;
             break;
 
@@ -85,21 +91,17 @@ Fic.prototype.start = function (infos)
                             self.fm.createMobi(path, function (err, mobi)
                             {
                                 if (err)
-                                    self.error.newError("Error while converting to Mobi.");
-                                else
-                                    self.socket.emit("fileReady", {
-                                        source: self.source,
-                                        id: self.handler.ficId,
-                                        fileType: self.fileType
-                                    }); // Tell client that the MOBI is ready
+                                    return self.error.newError("Error while converting to Mobi.");
+
+                                self.filePath = mobi;
+                                return self.sendFileReady()
                             });
                         }
                         else
-                            self.socket.emit("fileReady", {
-                                source: self.source,
-                                id: self.handler.ficId,
-                                fileType: self.fileType
-                            }); // Tell the client that the EPUB is ready
+                        {
+                            self.filePath = path;
+                            return self.sendFileReady(); // Tell the client that the EPUB is ready
+                        }
                     }
                 })
 
@@ -136,11 +138,10 @@ Fic.prototype.start = function (infos)
                             self.fm.fileExist(mobi, function (exist)
                             {
                                 if (exist)
-                                    return self.socket.emit("fileReady", {
-                                        source: self.source,
-                                        id: self.handler.ficId,
-                                        fileType: self.fileType
-                                    }); // Send fileReady to client for MOBI file if it already exists
+                                {
+                                    self.filePath = mobi;
+                                    return self.sendFileReady(); // Send fileReady to client for MOBI file if it already exists
+                                }
                                 else
                                 {
                                     self.socket.emit("status", "Converting to mobi...");
@@ -149,11 +150,8 @@ Fic.prototype.start = function (infos)
                                         if (err)
                                             return self.error.newError("An error as occured while converting to mobi.");
 
-                                        return self.socket.emit("fileReady", {
-                                            source: self.source,
-                                            id: self.handler.ficId,
-                                            fileType: self.fileType
-                                        }); //// Send fileReady to client for MOBI file after creating it
+                                        self.filePath = file;
+                                        return self.sendFileReady();// Send fileReady to client for MOBI file after creating it
                                     });
                                 }
                             });
@@ -161,11 +159,8 @@ Fic.prototype.start = function (infos)
                         else // EPUB exist and EPUB file requested
                         {
                             Debug.log("Epub already exist and is up to date.");
-                            return self.socket.emit("fileReady", {
-                                source: source,
-                                id: self.handler.ficId,
-                                fileType: self.fileType
-                            }); // Send fileReady to client for EPUB file that already exists
+                            self.filePath = epub;
+                            return self.sendFileReady();// Send fileReady to client for EPUB file that already exists
                         }
                     }
                     else // EPUB doesnt exist
@@ -187,6 +182,67 @@ Fic.prototype.start = function (infos)
     });
 };
 
+Fic.prototype.sendFileReady = function()
+{
+    var self = this;
+    self.socket.emit("fileReady", {
+        source: this.source,
+        id: this.handler.ficId,
+        fileType: this.fileType
+    });
+
+    if (self.sendEmail != true)
+        return;
+
+    var mailOpts =
+    {
+        from: '"FF2EBOOK" <ebook-sender@ff2ebook.com>',
+        to: self.emailAddress,
+        subject: "Your eBook: " + self.handler.title + " - " + self.handler.author,
+        text: "Enjoy!",
+        attachments: [
+            {
+                filename: self.handler.title + " - " + self.handler.author + "." + self.fileType,
+                path: self.filePath
+            }
+        ]
+    };
+
+    var smtpConfig =
+    {
+        service: "gmail",
+        secure: true,
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWD
+        }
+    };
+
+    //var trans = Mailer.createTransport('smtps://ff2ebook%40gmail.com:Reev9tee@smtp.gmail.com');
+    var trans = Mailer.createTransport(smtpConfig);
+
+    trans.verify(function (err, success)
+    {
+        if (err)
+            return Debug.log(err);
+        else
+        {
+
+            Debug.log("SMTP connection good.");
+            trans.sendMail(mailOpts, function (err, info)
+            {
+                if (err)
+                    return Debug.log(err);
+                else
+                {
+                    Debug.log("Email sent.");
+                }
+
+            });
+        }
+    });
+};
+
 function findSource(url)
 {
     if (url.search("fanfiction.net") > -1)
@@ -200,6 +256,7 @@ function findSource(url)
 
     return false;
 }
+
 
 
 module.exports = Fic;
