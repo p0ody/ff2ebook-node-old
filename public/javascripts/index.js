@@ -1,4 +1,8 @@
 var _chapReadyCount = 0;
+const PCT_FIC_INFOS = 10;
+const PCT_CHAPTERS = 60;
+const PCT_EPUB = 10;
+const PCT_MOBI = 10;
 
 $(document).ready(function ()
 {
@@ -44,11 +48,13 @@ $(document).ready(function ()
 
     socket.on("critical", function(msg)
     {
-        //alert("Error: "+ msg);
+        addOutput(msg, "critical");
+        $("#critical-icon").show();
     });
     socket.on("warning", function(msg)
     {
-        alert("Warning: "+ msg);
+        addOutput(msg, "warning");
+        $("#warning-icon").show();
     });
 
     socket.on("status", updateStatusText);
@@ -56,11 +62,13 @@ $(document).ready(function ()
     socket.on("chapReady", function(chapCount)
     {
         _chapReadyCount++;
+        addPercent(parseFloat(PCT_CHAPTERS / chapCount));
         updateStatusText("Chapter ready: "+ _chapReadyCount +"/"+ chapCount);
     });
 
     socket.on("fileReady", function(data)
     {
+        setPercent(100);
         enableInputs(true);
         updateStatusText("<a id=\"download-link\" href=\"/download/"+ data.source +"/"+ data.id +"/"+ data.fileType +"\">Download!</a>");
         if ($("#auto-dl").prop("checked"))
@@ -69,15 +77,30 @@ $(document).ready(function ()
 
     socket.on("emailStart", function()
     {
-        updateEmailSent("Sending email...", "yellow");
+        updateEmailSent("Sending email...", "warning");
     });
 
     socket.on("emailSent", function(err)
     {
         if (err)
-            return updateEmailSent("<span class=\"glyphicon glyphicon-ban-circle\" aria-hidden=\"true\"></span> "+ err, "red");
+            return updateEmailSent("<span class=\"glyphicon glyphicon-ban-circle\" aria-hidden=\"true\"></span> "+ err, "critical");
 
-        updateEmailSent("<span class=\"glyphicon glyphicon-ok-circle\" aria-hidden=\"true\"></span> Email sent!", "#00FF40");
+        updateEmailSent("<span class=\"glyphicon glyphicon-ok-circle\" aria-hidden=\"true\"></span> Email sent!", "good");
+    });
+
+    socket.on("ficInfosReady", function()
+    {
+        addPercent(PCT_FIC_INFOS);
+    });
+
+    socket.on("epubStart", function()
+    {
+        addPercent(PCT_EPUB);
+    });
+
+    socket.on("mobiStart", function()
+    {
+        addPercent(PCT_MOBI);
     });
 
 });
@@ -109,6 +132,10 @@ function reset()
     updateStatusText("Ready.");
     enableInputs(true);
     updateEmailSent("");
+    $(".output-text").html("");
+    setPercent(0);
+    $("#critical-icon").hide();
+    $("#warning-icon").hide();
 }
 
 function enableInputs(bool)
@@ -135,10 +162,44 @@ function enableInputs(bool)
     }
 }
 
-function updateEmailSent(msg, color)
+function updateEmailSent(msg, colorClass)
 {
-    if (color === undefined)
-        color = "white";
+    if (colorClass === undefined)
+        colorClass = "";
 
-    $("#email-sent").html("<span style=\"color: "+ color +"\">"+ msg +"</span>");
+    $("#email-sent").html("<span class=\""+ colorClass +"\">"+ msg +"</span>");
+}
+
+function addOutput(msg, colorClass)
+{
+    if (colorClass === undefined)
+        colorClass = "";
+
+    $(".output-text").html($(".output-text").html() +"<div class=\""+ colorClass +"\">"+ msg +"</div>");
+}
+
+function addPercent(pct)
+{
+    pct = parseFloat(pct);
+    var current = parseFloat($(".progress-bar").attr("aria-valuenow"));
+    var after = pct + current;
+
+    if (after > 100)
+        after = 100;
+
+    setPercent(after);
+}
+
+function setPercent(pct)
+{
+    console.log(pct);
+    if (pct > 100)
+        pct = 100;
+
+    if (pct < 0)
+        pct = 0;
+
+    var pb = $(".progress-bar");
+    pb.attr("aria-valuenow", pct);
+    pb.css("width", pct + "%");
 }

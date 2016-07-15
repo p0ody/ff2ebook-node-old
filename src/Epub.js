@@ -3,6 +3,7 @@ var ErrorHandler = require("./ErrorHandler");
 var async = require("async");
 var tidy = require("htmltidy2").tidy;
 var EpubGen = require("epub-generator");
+var Utils = require("./Utils");
 
 var tidyOpts = {
     doctype: 'xhtml',
@@ -16,7 +17,6 @@ function Epub(fic, callback)
     this.epubPath = process.env.ARCHIVE_DIR +"/"+ fic.source +"_"+ fic.ficId +"_"+ fic.updatedDate +".epub";
     this.content = [];
     this.fic = fic;
-    this.Utils = require("./Utils");
     this.epub = false;
     this.callback = callback;
 
@@ -74,8 +74,8 @@ Epub.prototype.genTitlePage = function()
         {
             var find = [ "%title%", "%author%", "%fandom%", "%summary%", "%status%", "%ficType%", "%pairing%", "%published%", "%updated%", "%wordsCount%", "%chapCount%", "%convertDate%" ];
             var replace = [
-                self.fic.title,
-                self.fic.author,
+                Utils.genFicURL(self.fic.source, self.fic.ficId, self.fic.title),
+                Utils.genAuthorURL(self.fic.source, self.fic.authorId, self.fic.author),
                 formatValue("Fandom", self.fic.fandom),
                 formatValue("Summary", self.fic.summary),
                 formatValue("Status", self.fic.status),

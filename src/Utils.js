@@ -19,18 +19,33 @@ module.exports =
         return false;
     },
 
-    dynamicSort: function (property)
+    /** @param {String} source
+        @param {number} id
+        @param {String} linkText */
+    genFicURL: function (source, id, linkText)
     {
-        var sortOrder = 1;
-        if (property[0] === "-")
+        switch(source)
         {
-            sortOrder = -1;
-            property = property.substr(1);
+            case "ffnet":
+                return "<a href=\"https://www.fanfiction.net/s/"+ id +"\">"+ linkText +"</a>";
+
+            default:
+                return linkText;
         }
-        return function (a, b)
+    },
+
+    /** @param {String} source
+     @param {number} id
+     @param {String} linkText */
+    genAuthorURL: function (source, id, linkText)
+    {
+        switch(source)
         {
-            var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
-            return result * sortOrder;
+            case "ffnet":
+                return "<a href=\"https://www.fanfiction.net/u/"+ id +"\">"+ linkText +"</a>";
+
+            default:
+                return linkText;
         }
     }
 };

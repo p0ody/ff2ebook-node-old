@@ -131,7 +131,6 @@ FFNET.prototype.findFicInfos = function()
 
 FFNET.prototype.findChapterInfos = function(chapNum)
 {
-    this.socket.emit("chapReady", this.chapterCount);
 
     var source = this.pageSource[chapNum];
     if (source === false)
@@ -151,6 +150,8 @@ FFNET.prototype.findChapterInfos = function(chapNum)
         this.error.newError("Couldn't find chapter text for chapter #"+ chapNum);
         return;
     }
+
+    this.socket.emit("chapReady", this.chapterCount);
 
     this.chapters[chapNum] = chapter;
     this.chaptersReady++;

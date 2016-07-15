@@ -12,6 +12,7 @@ const SOURCE_HPFF = "hpff";
 const TYPE_EPUB = "epub";
 const TYPE_MOBI = "mobi";
 
+
 function Fic(socket)
 {
     this.url = false;
@@ -66,6 +67,7 @@ Fic.prototype.start = function (infos)
     {
         Debug.log("Chapters ready");
         // Start epub creation
+        self.socket.emit("epubStart");
         self.fm.createEpub(self.handler, function (err, path)
         {
             if (err)
@@ -84,6 +86,7 @@ Fic.prototype.start = function (infos)
                     else
                     {
                         // Start mobi convertion if filetype is mobi
+                        self.socket.emit("mobiStart");
                         self.socket.emit("status", "Epub ready.");
                         if (self.fileType == TYPE_MOBI)
                         {
@@ -112,6 +115,7 @@ Fic.prototype.start = function (infos)
     self.events.on("ficInfoReady", function ()
     {
         Debug.log("Fic Infos ready");
+        self.socket.emit("ficInfosReady");
 
         if (self.forceUpdate == true)
             return self.handler.gatherChaptersInfos(); // Keep going in file creation
@@ -144,6 +148,7 @@ Fic.prototype.start = function (infos)
                                 }
                                 else
                                 {
+                                    self.socket.emit("mobiStart");
                                     self.socket.emit("status", "Converting to mobi...");
                                     self.fm.createMobi(epub, function (err, file)
                                     {
