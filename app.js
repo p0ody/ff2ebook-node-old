@@ -83,14 +83,15 @@ app.use(function (err, req, res, next) {
 
 // MySQL
 var mysql = require("mysql");
-global.db = mysql.createConnection(
+global.db = mysql.createPool(
 {
     host: process.env.SQL_HOST,
     user: process.env.SQL_USER,
     password: process.env.SQL_PASSWORD,
-    database: process.env.SQL_DB
+    database: process.env.SQL_DB,
+    connectionLimit : 20
 });
-
+/*
 global.db.connect(function(err)
 {
     if (err)
@@ -99,7 +100,7 @@ global.db.connect(function(err)
     }
     else
         Debug.log("Connected to database.");
-});
+});*/
 
 global.db.on("error", function(err)
 {

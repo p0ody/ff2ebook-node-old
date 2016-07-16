@@ -126,7 +126,7 @@ Fic.prototype.start = function (infos)
             if (err)
             {
                 Debug.log(err);
-                return self.error.newError("Error whilte accessing database, please try again later");
+                return self.error.newError("Error while accessing database, please try again later");
             }
 
             if ((result.length > 0 && result[0].updated >= self.handler.updatedDate)) // If is in DB and is up to date, check if filetype requested is mobi, then send appropiate file.
