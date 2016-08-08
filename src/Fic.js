@@ -60,7 +60,7 @@ Fic.prototype.start = function (infos)
          handler = new*/
     }
 
-    self.handler.gatherFicInfos(self.gatherFicInfosCallback);
+    self.handler.gatherFicInfos(self.gatherFicInfosCallback.bind(this));
 
 };
 
@@ -226,7 +226,7 @@ Fic.prototype.gatherChaptersInfosCallback = function(err)
 
 
         global.db.query("REPLACE INTO `fic_archive` (`site`,`id`,`title`,`author`,`authorID`,`updated`,`filename`) VALUES (?,?,?,?,?,?,?);",
-            [source, self.handler.ficId, self.handler.title, self.handler.author, self.handler.authorId, self.handler.updatedDate, global.path.basename(path)],
+            [self.source, self.handler.ficId, self.handler.title, self.handler.author, self.handler.authorId, self.handler.updatedDate, global.path.basename(path)],
             function (err)
             {
                 if (err)
