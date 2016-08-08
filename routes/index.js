@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-Debug = require("../src/Debug");
+var Debug = require("../src/Debug");
 
 router.get('/', function (req, res, next)
 {
@@ -26,11 +26,6 @@ router.get('/', function (req, res, next)
             sendEmail: sendEmail,
             emailAddress: req.cookies.email
         });
-});
-
-router.get('/archive', function (req, res, next)
-{
-    res.render('archive');
 });
 
 router.post('/setCookie', function (req, res, next)

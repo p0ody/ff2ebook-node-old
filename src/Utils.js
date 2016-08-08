@@ -1,3 +1,5 @@
+var Enums = require("./Enums");
+
 module.exports =
 {
     normalizePort: function (val)
@@ -20,14 +22,14 @@ module.exports =
     },
 
     /** @param {String} source
-        @param {number} id
-        @param {String} linkText */
+     @param {number} id
+     @param {String} linkText */
     genFicURL: function (source, id, linkText)
     {
-        switch(source)
+        switch (source)
         {
             case "ffnet":
-                return "<a href=\"https://www.fanfiction.net/s/"+ id +"\">"+ linkText +"</a>";
+                return "<a href=\"https://www.fanfiction.net/s/" + id + "\">" + linkText + "</a>";
 
             default:
                 return linkText;
@@ -39,13 +41,41 @@ module.exports =
      @param {String} linkText */
     genAuthorURL: function (source, id, linkText)
     {
-        switch(source)
+        switch (source)
         {
             case "ffnet":
-                return "<a href=\"https://www.fanfiction.net/u/"+ id +"\">"+ linkText +"</a>";
+                return "<a href=\"https://www.fanfiction.net/u/" + id + "\">" + linkText + "</a>";
 
             default:
                 return linkText;
+        }
+    },
+
+    findSource: function (url)
+    {
+        if (url.search("fanfiction.net") > -1)
+            return Enums.Sources.FFnet;
+
+        if (url.search("fictionpress.com") > -1)
+            return Enums.Sources.FPcom;
+
+        if (url.search("harrypotterfanfiction.com") > -1)
+            return Enums.Sources.HPFF;
+
+        return false;
+    },
+
+    isValidSource: function (source)
+    {
+        switch (source)
+        {
+            case Enums.Sources.FFnet:
+            case Enums.Sources.FPcom:
+            case Enums.Sources.HPFF:
+                return true;
+
+            default:
+                return false;
         }
     }
 };

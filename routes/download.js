@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-Debug = require("../src/Debug");
+var Debug = require("../src/Debug");
 var FileMgr = require("../src/FileMgr");
 var _ = require('lodash');
 
