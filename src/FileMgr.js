@@ -2,10 +2,7 @@ var Debug = require("./Debug");
 var Epub = require("./Epub");
 var ErrorHandler = require("./ErrorHandler");
 
-function FileMgr(callback)
-{
-    this.callback = callback;
-}
+function FileMgr() {}
 
 FileMgr.prototype.createEpub = function(fic, callback)
 {

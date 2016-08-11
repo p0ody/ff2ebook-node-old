@@ -6,13 +6,13 @@ function ErrorHandler(socket)
     self.newError = function(msg)
     {
         socket.emit("critical", msg);
-        Debug.log(msg);
+        Debug.log("Error: "+ msg);
     };
 
     self.newWarning = function(msg)
     {
         socket.emit("warning", msg);
-        Debug.log(msg);
+        Debug.log("Warning: "+ msg);
     };
 
 }

@@ -1,22 +1,18 @@
 var Debug = require("./Debug");
 var FFNET = require("./FFNET");
-var events = require("events");
-var ErrorHandler = require("./ErrorHandler");
 var FileMgr = require("./FileMgr");
 var Mailer = require("nodemailer");
 var Enums = require("./Enums");
 var Utils = require("./Utils");
 
-function Fic(socket)
+function Fic(event)
 {
     this.url = false;
     this.forceUpdate = false;
     this.source = false;
-    this.error = new ErrorHandler(socket);
-    this.event = new events.EventEmitter();
+    this.event = event;
     this.handler = false;
-    this.fm = new FileMgr(socket, this.event);
-    this.socket = socket;
+    this.fm = new FileMgr();
     this.fileType = false;
     this.sendEmail = false;
     this.emailAddress = false;
@@ -25,13 +21,16 @@ function Fic(socket)
     var self = this;
     self.event.on("warning", function(msg)
     {
-        self.error.newWarning(msg);
+        self.event.emit("warning", msg);
     });
 }
 
 Fic.prototype.start = function (infos)
 {
     var self = this;
+
+    if (!infos)
+        return self.event.emit("error", "Invalid infos object");
 
     self.url = infos.url;
     self.forceUpdate = infos.forceUpdate;
@@ -40,12 +39,12 @@ Fic.prototype.start = function (infos)
     self.emailAddress = infos.emailAddress;
 
     if (self.fileType != Enums.FileType.Epub && self.fileType != Enums.FileType.Mobi)
-        return self.error.newError("Invalid filetype.");
+        return self.event.emit("critical", "Invalid filetype.");
 
     var source = Utils.findSource(self.url);
 
     if (source === false)
-        return self.error.newError("Couldn't find fic source (Website).");
+        return self.event.emit("critical", "Couldn't find fic source (Website).");
 
     self.source = source;
 
@@ -60,14 +59,13 @@ Fic.prototype.start = function (infos)
          handler = new*/
     }
 
-    self.handler.gatherFicInfos(self.gatherFicInfosCallback.bind(this));
-
+    self.handler.gatherFicInfos(self.gatherFicInfosCallback.bind(self));
 };
 
 Fic.prototype.sendFileReady = function()
 {
     var self = this;
-    self.socket.emit("fileReady", {
+    self.event.emit("fileReady", {
         source: this.source,
         id: this.handler.ficId,
         fileType: this.fileType
@@ -76,7 +74,7 @@ Fic.prototype.sendFileReady = function()
     if (self.sendEmail != true && self.emailAddress !== false)
         return;
 
-    self.socket.emit("emailStart");
+    self.event.emit("emailStart");
     var mailOpts =
     {
         from: '"FF2EBOOK" <ebook-sender@ff2ebook.com>',
@@ -116,12 +114,12 @@ Fic.prototype.sendFileReady = function()
             {
                 if (err)
                 {
-                    self.socket.emit("emailSent", "An error has occured.");
+                    self.event.emit("emailSent", "An error has occured.");
                     return Debug.log(err);
                 }
                 else
                 {
-                    self.socket.emit("emailSent");
+                    self.event.emit("emailSent");
                     Debug.log("Email sent.");
                 }
 
@@ -135,13 +133,12 @@ Fic.prototype.gatherFicInfosCallback = function(err)
     var self = this;
 
     if (err)
-        return self.error.newError(err);
+        return self.event.emit("critical", err);
 
-    Debug.log("Fic Infos ready");
-    self.socket.emit("ficInfosReady");
+    self.event.emit("ficInfosReady");
 
     if (self.forceUpdate == true)
-        return self.handler.gatherChaptersInfos(self.gatherChaptersInfosCallback); // Keep going in file creation
+        return self.handler.gatherChaptersInfos(self.gatherChaptersInfosCallback.bind(self)); // Keep going in file creation
 
     // Check if fic is in DB
     global.db.query("SELECT * FROM `fic_archive` WHERE `id`=?;", [self.handler.ficId], function (err, result)
@@ -149,7 +146,7 @@ Fic.prototype.gatherFicInfosCallback = function(err)
         if (err)
         {
             Debug.log(err);
-            return self.error.newError("Error while accessing database, please try again later");
+            return self.event.emit("critical", "Error while accessing database, please try again later");
         }
 
         if ((result.length > 0 && result[0].updated >= self.handler.updatedDate)) // If is in DB and is up to date, check if filetype requested is mobi, then send appropiate file.
@@ -171,12 +168,12 @@ Fic.prototype.gatherFicInfosCallback = function(err)
                             }
                             else
                             {
-                                self.socket.emit("mobiStart");
-                                self.socket.emit("status", "Converting to mobi...");
+                                self.event.emit("mobiStart");
+                                self.event.emit("status", "Converting to mobi...");
                                 self.fm.createMobi(epub, function (err, file)
                                 {
                                     if (err)
-                                        return self.error.newError("An error as occured while converting to mobi.");
+                                        return self.event.emit("critical", "An error as occured while converting to mobi.");
 
                                     self.filePath = file;
                                     return self.sendFileReady();// Send fileReady to client for MOBI file after creating it
@@ -193,7 +190,7 @@ Fic.prototype.gatherFicInfosCallback = function(err)
                 }
                 else // EPUB doesnt exist
                 {
-                    self.handler.gatherChaptersInfos(self.gatherChaptersInfosCallback); // Keep going in file creation
+                    self.handler.gatherChaptersInfos(self.gatherChaptersInfosCallback.bind(self)); // Keep going in file creation
                     global.db.query("DELETE FROM `fic_archive` WHERE `id`=?", [self.handler.ficId], function (err) // Delete entry in DB if the file is not on the server anymore.
                     {
                         if (err)
@@ -204,7 +201,7 @@ Fic.prototype.gatherFicInfosCallback = function(err)
         }
         else // File is not in database
         {
-            self.handler.gatherChaptersInfos(self.gatherChaptersInfosCCallback); // Keep going in file creation
+            self.handler.gatherChaptersInfos(self.gatherChaptersInfosCallback.bind(self)); // Keep going in file creation
         }
     });
 };
@@ -214,15 +211,14 @@ Fic.prototype.gatherChaptersInfosCallback = function(err)
     var self = this;
 
     if (err)
-        return self.error.newError(err);
+        return self.event.emit("critical", err);
 
-    Debug.log("Chapters ready");
     // Start epub creation
-    self.socket.emit("epubStart");
+    self.event.emit("epubStart");
     self.fm.createEpub(self.handler, function (err, path)
     {
         if (err)
-            return self.error.newError(err);
+            return self.event.emit("critical", err);
 
 
         global.db.query("REPLACE INTO `fic_archive` (`site`,`id`,`title`,`author`,`authorID`,`updated`,`filename`) VALUES (?,?,?,?,?,?,?);",
@@ -232,20 +228,20 @@ Fic.prototype.gatherChaptersInfosCallback = function(err)
                 if (err)
                 {
                     Debug.log(err);
-                    return self.error.newError("Error while accessing database, please try again later");
+                    return self.event.emit("critical", "Error while accessing database, please try again later");
                 }
                 else
                 {
                     // Start mobi convertion if filetype is mobi
-                    self.socket.emit("mobiStart");
-                    self.socket.emit("status", "Epub ready.");
+                    self.event.emit("mobiStart");
+                    self.event.emit("status", "Epub ready.");
                     if (self.fileType == Enums.FileType.Mobi)
                     {
-                        self.socket.emit("status", "Converting to Mobi...");
+                        self.event.emit("status", "Converting to Mobi...");
                         self.fm.createMobi(path, function (err, mobi)
                         {
                             if (err)
-                                return self.error.newError("Error while converting to Mobi.");
+                                return self.event.emit("critical", "Error while converting to Mobi.");
 
                             self.filePath = mobi;
                             return self.sendFileReady()
