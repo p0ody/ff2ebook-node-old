@@ -48,9 +48,11 @@ app.use(express.static(global.path.join(__dirname, 'public')));
 var routes = require('./routes/index');
 var download = require("./routes/download");
 var archive = require("./routes/archive");
+var direct = require("./routes/direct");
 app.use('/', routes);
 app.use('/download', download);
 app.use('/archive', archive);
+app.use('/direct', direct);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

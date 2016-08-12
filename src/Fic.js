@@ -7,6 +7,7 @@ var Utils = require("./Utils");
 
 function Fic(event)
 {
+    this.ficId = false;
     this.url = false;
     this.forceUpdate = false;
     this.source = false;
@@ -32,6 +33,8 @@ Fic.prototype.start = function (infos)
     if (!infos)
         return self.event.emit("error", "Invalid infos object");
 
+    self.ficId = infos.ficId;
+    self.source = infos.source;
     self.url = infos.url;
     self.forceUpdate = infos.forceUpdate;
     self.fileType = infos.fileType.toLowerCase();
@@ -41,18 +44,29 @@ Fic.prototype.start = function (infos)
     if (self.fileType != Enums.FileType.Epub && self.fileType != Enums.FileType.Mobi)
         return self.event.emit("critical", "Invalid filetype.");
 
-    var source = Utils.findSource(self.url);
+    if (!self.source)
+    {
+        if (self.url)
+            self.source = Utils.findSource(self.url);
+        else
+            return self.event.emit("critical", "Couldn't find fic source (Website)1.");
+    }
 
-    if (source === false)
-        return self.event.emit("critical", "Couldn't find fic source (Website).");
-
-    self.source = source;
+    if (self.source === false)
+        return self.event.emit("critical", "Couldn't find fic source (Website)2.");
 
     switch (self.source)
     {
         case Enums.Sources.FFnet:
-            self.handler = new FFNET(self.url, self.event);
-            self.handler.source = source;
+            self.handler = new FFNET(self.event);
+
+            Debug.log(self.ficId);
+            if (self.ficId)
+                self.handler.setFicId(self.ficId);
+            else
+                self.handler.setURL(self.url);
+
+            self.handler.source = self.source;
             break;
 
         /*case Enums.Sources.FPcom:

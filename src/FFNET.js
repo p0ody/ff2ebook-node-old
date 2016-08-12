@@ -3,9 +3,9 @@ var Chapter = require("./Chapter");
 var Async = require("async");
 var Debug = require("./Debug");
 
-function FFNET(url, events)
+function FFNET(events)
 {
-    this.url = url;
+    this.url = false;
     this.source = false;
     this.ficId = false;
     this.title = false;
@@ -24,6 +24,22 @@ function FFNET(url, events)
     this.chapters = [];
     this.event = events;
 }
+
+FFNET.prototype.setURL = function(url)
+{
+    if (!url)
+        return this.event.emit("critical", "Invalid url.");
+
+    this.url = url;
+};
+
+FFNET.prototype.setFicId = function(id)
+{
+    if (!id)
+        return this.event.emit("critical", "Invalid ficId.");
+
+    this.ficId = id;
+};
 
 FFNET.prototype.gatherFicInfos = function(completedCallback)
 {
@@ -104,6 +120,9 @@ FFNET.prototype.getPageSource = function(chapNum, callback)
 
 FFNET.prototype.findId = function()
 {
+    if (this.ficId)
+        return this.ficId;
+
     if (this.url === false)
         return false;
 
