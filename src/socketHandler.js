@@ -54,8 +54,8 @@ function initEventHandler(socket)
     handler.onFicInfosReady = function() { socket.emit("ficInfosReady"); };
     handler.onStatus = function(msg) { socket.emit("status", msg); };
     handler.onEpubStart = function() { socket.emit("epubStart"); };
-    handler.onEmailStart = function() { socket.emit("EmailStart"); };
-    handler.onEmailSent = function(err) { socket.emit("EmailSent", err); };
+    handler.onEmailStart = function() { socket.emit("emailStart"); };
+    handler.onEmailSent = function(err) { socket.emit("emailSent", err); };
     handler.onMobiStart = function() { socket.emit("mobiStart"); };
     handler.onChapReady = function(chapCount) { socket.emit("chapReady", chapCount); };
     

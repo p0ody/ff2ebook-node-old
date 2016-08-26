@@ -59,8 +59,13 @@ FFNET.prototype.gatherFicInfos = function(completedCallback)
         },
         function(body, callback)
         {
-            var infos = self.findFicInfos(body);
-            callback(null);
+            if (self.isValidFic(body))
+            {
+                var infos = self.findFicInfos(body);
+                callback(null)
+            }
+            else
+                callback("Invalid fic URL.");
         }
     ], completedCallback);
 };
@@ -87,8 +92,11 @@ FFNET.prototype.gatherChaptersInfos = function(completedCallback)
                     else
                         callback(null, chapter);
                 });
-            }, function (err)
+            }, function (err, chapter)
             {
+                if (!err)
+                    self.chapters.push(chapter);
+
                 self.event.emit("chapReady", self.chapterCount);
                 next(err);
             });
@@ -343,6 +351,15 @@ FFNET.prototype.warningEvent = function(msg)
 {
     if (this.event)
         this.event.emit("warning", msg);
+};
+
+FFNET.prototype.isValidFic = function(source)
+{
+    var matches = source.match(/<span class='gui_warning'>Story Not Found/i);
+    if (matches === null)
+        return true;
+
+    return false;
 };
 
 module.exports = FFNET;

@@ -72,8 +72,9 @@ Epub.prototype.genTitlePage = function()
             self.callback("Couldn't read title.xhtml.");
         else
         {
-            var find = [ "%title%", "%author%", "%fandom%", "%summary%", "%status%", "%ficType%", "%pairing%", "%published%", "%updated%", "%wordsCount%", "%chapCount%", "%convertDate%" ];
+            var find = [ "%title%", "%titleLink%", "%author%", "%fandom%", "%summary%", "%status%", "%ficType%", "%pairing%", "%published%", "%updated%", "%wordsCount%", "%chapCount%", "%convertDate%" ];
             var replace = [
+                self.fic.title,
                 Utils.genFicURL(self.fic.source, self.fic.ficId, self.fic.title),
                 Utils.genAuthorURL(self.fic.source, self.fic.authorId, self.fic.author),
                 formatValue("Fandom", self.fic.fandom),

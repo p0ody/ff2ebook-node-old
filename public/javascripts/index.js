@@ -50,6 +50,8 @@ $(document).ready(function ()
     {
         addOutput(msg, "critical");
         $("#critical-icon").show();
+
+        enableInputs(true);
     });
     socket.on("warning", function(msg)
     {

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>FF2eBook.com</title>
+    <!--StylesSheets-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link rel='stylesheet' href='/stylesheets/style.css'/>
+    <!--JavaScripts-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+    <script src="/javascripts/batch.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+<% include menu %>
+
+<div class="row">
+    <div class="col-xs-12 progress">
+        <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+</div>
+
+<div class="container-fluid">
+
+    <div class="row">
+        <div class="col-md-offset-3 col-md-6">
+            <ul class="nav nav-tabs" role="tablist">
+                <li role="presentation" class="active"><a href="#author-lib" aria-controls="author-lib" role="tab" data-toggle="tab">Author library</a></li>
+                <li role="presentation"><a href="#multiple" aria-controls="multiple" role="tab" data-toggle="tab">Multiple single Fic</a></li>
+            </ul>
+
+
+            <div class="tab-content">
+                <div role="tabpanel" class="tab-pane active" id="author-lib">
+                    <div id="status-text">Ready.</div>
+                    <form id="input-form">
+                        <div class="form-group input-group">
+                            <input type="url" class="form-control" id="input-text" placeholder="URL: fanfiction.net">
+                        <span class="input-group-btn">
+                            <button id="fic-submit" type="submit" class="btn btn-default">Convert</button>
+                        </span>
+                        </div>
+                        <!-- Options -->
+                        <div class="input-options">
+                            Filetype:
+                            <select class="form-control" id="file-type">
+                                <option <%= typeEpub %>>EPUB</option>
+                                <option <%= typeMobi %>>MOBI</option>
+                            </select>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" id="force-update"> Force Update.
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" id="auto-dl" <%= autoDL %>> Automatically download when ready.
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" id="send-email" <%= sendEmail %>> Send as Email
+                                </label>
+                            </div>
+                            <input type="email" class="form-control" id="email-address" placeholder="Email" value="<%= emailAddress %>">
+                        </div>
+                        <div id="email-sent"></div>
+                    </form>
+                </div>
+                <div role="tabpanel" class="tab-pane" id="multiple">Multiple single Fic</div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="row">
+        <div class="col-md-offset-3 col-md-6" id="output-area">
+            <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+                <div class="panel panel-default">
+                    <div class="panel-heading" role="tab" id="output-header" data-toggle="collapse" data-parent="#accordion" data-target="#output-collapse" aria-expanded="false" aria-controls="output-collapse">
+                        <h4 class="panel-title">
+                            Error/Warning:
+                            <span id="warning-icon" class="glyphicon glyphicon-warning-sign warning" style="display: none"></span>
+                            <span id="critical-icon" class="glyphicon glyphicon-remove-circle critical"  style="display: none"></span>
+                            <span class="float-right">(Click to toggle)</span>
+                        </h4>
+                    </div>
+                    <div id="output-collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="output-header">
+                        <div class="panel-body output-text">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>
